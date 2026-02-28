@@ -33,15 +33,15 @@ app.get('/produtos', (req, res) => {
 });
 
 app.post('/produtos', (req, res) => {
-    const { nome, categoria, preco } = req.body;
+    const { nome, categoria, preco, descricao } = req.body;
 
     if (!nome || !categoria || !preco) {
         return res.status(400).json({ erro: "Todos os campos (nome, categoria, preco) sao obrigatorios!" });
     }
 
-    const sql = 'INSERT INTO products_luan (nome, categoria, preco) VALUES (?, ?, ?)';
+    const sql = 'INSERT INTO products_luan (nome, categoria, preco, descricao) VALUES (?, ?, ?, ?)';
     
-    db.query(sql, [nome, categoria, preco], (err, result) => {
+    db.query(sql, [nome, categoria, preco, descricao], (err, result) => {
         if (err) {
             console.error('Erro no INSERT:', err);
             return res.status(500).json({ erro: "Erro ao salvar no banco", detalhes: err.message });
@@ -55,12 +55,19 @@ app.post('/produtos', (req, res) => {
 
 app.delete('/produtos/:id', (req, res) => {
     const { id } = req.params;
-    db.query('DELETE FROM products_luan WHERE id = ?', [id], (err, result) => {
+    const sql = 'DELETE FROM products_luan WHERE id = ?';
+
+    db.query(sql, [id], (err, result) => {
         if (err) {
             console.error('Erro no DELETE:', err);
             return res.status(500).json({ erro: "Erro ao remover produto" });
         }
-        res.status(200).json({ mensagem: "Produto removido do banco!" });
+
+        if (result.affectedRows === 0) {
+            return res.status(404).json({ mensagem: "Produto nao encontrado!" });
+        }
+
+        res.status(200).json({ mensagem: `Produto com ID ${id} removido com sucesso!` });
     });
 });
 
